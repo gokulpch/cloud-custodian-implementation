@@ -1,4 +1,4 @@
-# Cloud Custodian pipeline
+# Custodian Implementation in proper way using Git
  
 This repo will provide you with a cloudformation template to deploy a policy-as-code pipeline to automate your cloud custodian policies deployment. 
 This is desirable for many reasons, some of witch is:
@@ -10,7 +10,7 @@ This is desirable for many reasons, some of witch is:
 DISCLAIMER:
 Use this solution at your own risk. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 
-## Setting up the Multi-Account structure for Custodian.   
+## Multi-Account structure for Custodian.   
  
 Custodian can be used either in a single account or in a multi-account configuration.  In this set up we are going to have a central **'Master/Security'** account and a number of **'Member'** accounts which will be managed by the Custodian policies.  These will be referred to a Member and Master respectively from this point forward. 
  
@@ -20,8 +20,6 @@ The Architecture Diagram is below:
  
 [architecture]: img/custodian.png 
  
-### Note that at this moment, the Guard-duty piece is *not* in place. (Work In-Progress)
-
 The Master account will be used to host: 
 - AWS CodeCommit Repository (a git repository) 
 - AWS CodeBuild 
@@ -42,17 +40,17 @@ There are a few things worth noting:
 1. This is a single-region deployment that can be extended to work multi-region with easy (instructions below).
 2. This automation approach its only suitable for cloudtrail based policies initially (please see considerations below if you would like to use other types of policies, e.g: periodic / config / etc)
 
-### What you'll need before start:
+### Requirements:
 1. Clone this repo into your machine.
 2. Identify the Master Account ID. This should be your "Security" account, not your AWS Master Org Account.
 3. Identify the Member Accounts you'll want to monitor with Cloudcustodian (Account IDs)
 4. Make sure you have admin access to all accounts in question.
 
-# Member Account 
+# Account 
  
 This is the account(s) that will be monitored by Custodian. This account needs to send Cloudwatch Events to the Master (Security) Account. We have to also create a Role and policies with the appropriate permissions for the Master/Security Account to STS/AssumeRole and carry the actions out. Here is how you deploy the resources in the Member Account:
  
-#### Deploy the CloudFormation Script via the console 
+#### CloudFormation for Custodian creation 
  
 1.  Login to the console (or assume a role via STS) of the Member (monitored) account.  Go to CloudFormation 
 2.  Create Stack 
@@ -68,7 +66,7 @@ This is the account(s) that will be monitored by Custodian. This account needs t
  
 NOTE: You can use Cloudformation StackSets to perform this action in all "Member" accounts for you.
 
-#### Deploy the CloudFormation Script via the CLI 
+#### CLI way of Deployment 
  
 Ensure you have the AWS CLI installed and configured.  You will need IAM Access Keys to use the AWS CLI 
  
@@ -104,7 +102,7 @@ aws cloudformation create-stack \
 --enable-termination-protection 
 ``` 
  
-# Master Account  
+# Master/Leader Account  
  
 ## Deploy CloudFormation to build Repository and CodePipeline 
  
@@ -134,9 +132,9 @@ This will build:
   - PolicyCleanUpStage 
   - PolicyDeploymentStage 
  
-# Setting up the Security Engineer workspace:
+# Security:
 
-## Setting-up your local environment with Cloud Custodian 
+## local environment with Cloud Custodian 
  
 To prevent packaging conflicts on your local environment it is recommended that you uses a virtual environment.  
  
@@ -188,7 +186,7 @@ The process is outlined in documentation at [Using IAM with CodeCommit: Git Cred
 - To set up ssh keys on Linux,macOS, Unix [Configure Credentials on Linux, macOS, or Unix](https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-ssh-unixes.html) 
 - To set up ssh keys on Windows [Setup Steps for SSH Connections to AWS CodeCommit Repositories on Windows](https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-ssh-windows.html) 
  
-## On your Local Machine 
+## On Local Machine 
  
 In the directory on your local machine where you will store your custodians scripts. Create two directories: 
  
@@ -247,7 +245,7 @@ git remote -v
 git push -u origin master 
 ``` 
  
-### Conditional policy for the Master Branch 
+### Policy for the Master Branch 
  
 A policy should be applied to prevent any user with access to the git repository from Merging into the Master Branch, which will initate a build of the pipeline.  Development of the Custodian Policies should be carried out on a branch and then reviewed before being merged into the main branch.  The blog post [Using AWS CodeCommit Pull Requests to request code reviews and discuss code](https://aws.amazon.com/blogs/devops/using-aws-codecommit-pull-requests-to-request-code-reviews-and-discuss-code/) provides a good overview of how to implement this process. 
  
@@ -502,7 +500,3 @@ IMPORTANT: In order for the action c7n-org_Deploy to be able to assume the Cloud
 ```
 
 Note: If this file is not present, the dry-run command will skip, but the action "c7n-org" will still provision and run skipping steps, if you do not intend to use this, you might want to remove the action so you won't be paying for resources you're using with no purpose. 
-
-## TO-DO:
-
-1. Improve documentation on c7n-mailer (how to properly set-up)
