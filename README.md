@@ -1,4 +1,4 @@
-# Custodian Implementation in proper way using Git
+# Custodian Implementation in a proper way using Git
  
 This repo will provide you with a cloudformation template to deploy a policy-as-code pipeline to automate your cloud custodian policies deployment. 
 This is desirable for many reasons, some of witch is:
